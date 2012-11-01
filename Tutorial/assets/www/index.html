@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Tutorial 1</title>
+<script type="text/javascript" charset="utf-8" src="cordova-1.9.0.js"></script>
+</head>
+<body>
+<h1>Hello World</h1>
+<div id="myDiv"></div>
+<script type="text/javascript" >
+	var url = "http://dl.dropbox.com/u/645186/data.json";
+	var request = new XMLHttpRequest();
+	request.onreadystatechange=function(){
+	  if (request.readyState==4 && request.status==200){
+		  
+		  var content = JSON.parse( request.responseText );
+		  var ul = document.createElement("ul");
+		  for (var i=0; i<content.results.length; i++){
+			  var obj = content.results[i];
+			  var li = document.createElement("li");
+			  var text = document.createTextNode( obj.name );
+			  li.appendChild( text );
+			  ul.appendChild( li );
+		  }
+		  document.getElementById("myDiv").appendChild( ul );
+	  } 
+	};
+	request.open("GET", url,true);
+	request.send();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+.metadata/**/*
+.metadata/.lock
+.metadata/.log
+.metadata/version.ini
+Tutorial/bin/**/*
+Tutorial2/bin/**/*
+Tutorial3/bin/**/*

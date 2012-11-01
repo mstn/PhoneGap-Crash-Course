@@ -1,0 +1,209 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Hello Worlds</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="jquery.mobile-1.2.0.css" />
+<script type="text/javascript" charset="utf-8" src="jquery-1.8.2.js"></script>
+<script type="text/javascript" charset="utf-8" src="jquery.mobile-1.2.0.js"></script>
+<script type="text/javascript" charset="utf-8" src="underscore.js"></script>
+<script type="text/javascript" charset="utf-8" src="backbone.js"></script>
+
+
+
+	<script type="text/template" id="itemListPage">
+
+		<div data-role="header" data-position="fixed">
+			<h1>An item list</h1>
+			<a href="" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+			<a href="create" data-icon="plus">Add item</a>
+		</div>
+
+		<div data-role="content">
+			<div id="myDiv"></div>
+		</div>
+
+	</script>
+	
+	<script type="text/template" id="itemDetailPage">
+		<div data-role="header" data-position="fixed">
+			<h1>Item details</h1>
+			<a href="" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+			<a href="create" data-icon="plus">Add item</a>
+		</div>
+		<div data-role="content">
+			<strong>Name:</strong><div id="item-name"></div><br/>
+			<strong>Description:</strong><div id="item-description"></div><br/>
+		</div>
+	</script>
+
+	<script type="text/template" id="addItemPage">
+		<div data-role="header" data-position="fixed">
+			<h1>Add item</h1>
+			<a href="" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+		</div>
+		<div data-role="content">
+			<form action="javascript:alert('sent!');" method="post">
+				<label for="item-name-field">Name:</label>
+				<input type="text" name="name" id="item-name-field" data-mini="true" />
+				<label for="item-description-field">Description:</label>
+				<input type="text" name="description" id="item-description-field" data-mini="true" />
+				<button type="submit" data-theme="b" name="submit" value="submit-value">Submit</button>
+			</form>
+		</div>
+	</script>
+
+</head>
+
+<body>
+
+
+
+
+	<script type="text/javascript">
+
+	// jQuery mobile + Backbone.js
+	// from http://coenraets.org/blog/2012/03/using-backbone-js-with-jquery-mobile/
+	
+	// disable jQuery mobile routing
+	$(document).bind("mobileinit", function () {
+	    $.mobile.ajaxEnabled = false;
+	    $.mobile.linkBindingEnabled = false;
+	    $.mobile.hashListeningEnabled = false;
+	    $.mobile.pushStateEnabled = false;
+	    
+		 // Remove page from DOM when it's being replaced
+		$('div[data-role="page"]').live('pagehide', function (event, ui) {
+		    $(event.currentTarget).remove();
+		});
+	});
+
+	var HomeView = Backbone.View.extend({
+
+	    template:_.template($('#itemListPage').html()),
+
+	    render:function (eventName) {
+	        $(this.el).html(this.template());
+	    	var url = "http://dl.dropbox.com/u/645186/data.json";
+
+			$.ajax({
+				url : url,
+				type : 'GET',
+				success : function(data, textStatus, xhr) {
+					// just for debugging print what you get from the server
+					console.log(data);
+					// parse data
+					var content = $.parseJSON(data);
+					// create a ul within myDiv
+					var uList = $('<ul/>').appendTo('#myDiv');
+					// add jquery mobile role: this element is a listview
+					uList.attr('data-role', 'listview');
+					// iterate through each item and create li elements
+					$.each( content.results, function( index, item ){
+						var liEl = $('<li/>');
+						liEl.append($('<a/>', {
+							'text' : item.name,
+							'href' : '#view',
+							'data-role': 'button',
+							'data-inline': 'true',
+							'data-transition': 'slide',
+							'data-params': JSON.stringify( item )
+						}))
+						uList.append(liEl);
+					} );
+					// create the listview with jquery mobile styles
+					uList.listview();
+
+			    	$('a').live('click',
+			    		    function(e) {
+			    		        params = $(e.target).jqmData("params");
+			    		    }
+			    	);
+				},
+				error : function(xhr, textStatus, errorThrown) {
+					console.error(errorThrown);
+					$('#myDiv').html(textStatus);
+				}
+			});
+	        return this;
+	    }
+	});
+
+	var DetailView = Backbone.View.extend({
+
+	    template:_.template($('#itemDetailPage').html()),
+
+	    render:function (eventName) {
+	        $(this.el).html(this.template());
+	    	$(this.el, '#item-name').empty();
+	    	$(this.el, '#item-name').append( params.name );
+	    	$(this.el, '#item-description').empty();
+	    	$(this.el, '#item-description').append( params.description );
+	        return this;
+	    }
+	});
+
+	var CreateView = Backbone.View.extend({
+
+	    template:_.template($('#addItemPage').html()),
+
+	    render:function (eventName) {
+	        $(this.el).html(this.template());
+	        return this;
+	    }
+	});
+	
+	var AppRouter = Backbone.Router.extend({
+		 
+	    routes:{
+	        "":"home",
+	        "view":"detail",
+	        "create":"create"
+	    },
+
+	    initialize:function () {
+	        // Handle back button throughout the application
+	        $('.back').live('click', function(event) {
+	            window.history.back();
+	            return false;
+	        });
+	        this.firstPage = true;
+	    },
+	    
+	    home:function () {
+	        this.changePage(new HomeView());
+	    },
+	 
+	    detail:function () {
+	        this.changePage(new DetailView());
+	    },
+	 
+	    create:function () {
+	        this.changePage(new CreateView());
+	    },
+	 
+	    changePage:function (page) {
+	        $(page.el).attr('data-role', 'page');
+	        page.render();
+	        $('body').append($(page.el));
+	        $.mobile.changePage($(page.el), {changeHash:false});
+	    }
+	 
+	});
+	
+	// on document ready
+	$( function(){
+		// start router
+		app = new AppRouter();
+	    Backbone.history.start();
+	});
+	
+
+	</script>
+
+
+</body>
+
+</html>
+
+

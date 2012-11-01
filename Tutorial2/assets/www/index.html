@@ -1,0 +1,125 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Hello Worlds</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="jquery.mobile-1.2.0.css" />
+<script type="text/javascript" charset="utf-8" src="jquery-1.8.2.js"></script>
+<script type="text/javascript" charset="utf-8" src="jquery.mobile-1.2.0.js"></script>
+</head>
+
+<body>
+
+	<div id="itemListPage" data-role="page">
+
+		<div data-role="header" data-position="fixed">
+			<h1>An item list</h1>
+			<a href="#itemListPage" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+			<a href="#addItemPage" data-icon="plus">Add item</a>
+		</div>
+
+		<div data-role="content">
+			<div id="myDiv"></div>
+		</div>
+
+	</div>
+	
+	<div id="itemDetailPage" data-role="page">
+		<div data-role="header" data-position="fixed">
+			<h1>Item details</h1>
+			<a href="#itemListPage" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+			<a href="#addItemPage" data-icon="plus">Add item</a>
+		</div>
+		<div data-role="content">
+			<strong>Name:</strong><div id="item-name"></div><br/>
+			<strong>Description:</strong><div id="item-description"></div><br/>
+		</div>
+	</div>
+
+	<div id="addItemPage" data-role="page">
+		<div data-role="header" data-position="fixed">
+			<h1>Add item</h1>
+			<a href="#itemListPage" data-icon="home" data-iconpos="notext" data-direction="reverse">Home</a>
+		</div>
+		<div data-role="content">
+			<form action="javascript:alert('sent!');" method="post">
+				<label for="item-name-field">Name:</label>
+				<input type="text" name="name" id="item-name-field" data-mini="true" />
+				<label for="item-description-field">Description:</label>
+				<input type="text" name="description" id="item-description-field" data-mini="true" />
+				<button type="submit" data-theme="b" name="submit" value="submit-value">Submit</button>
+			</form>
+		</div>
+	</div>
+
+
+	<script type="text/javascript">
+
+
+	
+	$('#itemListPage').bind('pageinit', function(event) {
+		getItemList();
+
+	});
+	
+	$('#itemDetailPage').bind('pagebeforeshow', function(event) {
+		$('#item-name').empty();
+		$('#item-name').append( params.name );
+		$('#item-description').empty();
+		$('#item-description').append( params.description );
+	});
+	
+	$('a').live('click',
+		    function(e) {
+		        params = $(e.target).jqmData("params");
+		    }
+	);
+
+		// the script is executed when the document is ready
+	function getItemList() {
+			var url = "http://dl.dropbox.com/u/645186/data.json";
+
+			$.ajax({
+				url : url,
+				type : 'GET',
+				success : function(data, textStatus, xhr) {
+					// just for debugging print what you get from the server
+					console.log(data);
+					// parse data
+					var content = $.parseJSON(data);
+					// create a ul within myDiv
+					var uList = $('<ul/>').appendTo('#myDiv');
+					// add jquery mobile role: this element is a listview
+					uList.attr('data-role', 'listview');
+					// iterate through each item and create li elements
+					$.each( content.results, function( index, item ){
+						var liEl = $('<li/>');
+						liEl.append($('<a/>', {
+							'text' : item.name,
+							'href' : '#itemDetailPage',
+							'data-role': 'button',
+							'data-inline': 'true',
+							'data-transition': 'slide',
+							'data-params': JSON.stringify( item )
+						}))
+						uList.append(liEl);
+					} );
+					// create the listview with jquery mobile styles
+					uList.listview();
+					// just for debugging
+					console.log($('body').html());
+				},
+				error : function(xhr, textStatus, errorThrown) {
+					console.error(errorThrown);
+					$('#myDiv').html(textStatus);
+				}
+			});
+		};
+	</script>
+
+
+</body>
+
+</html>
+
+
